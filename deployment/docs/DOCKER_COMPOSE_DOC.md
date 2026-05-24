@@ -1,13 +1,15 @@
-# Documentation docker-compose.yml
+# Documentation: docker-compose.yml
 
-## Architecture du déploiement
-Ce fichier orchestre les services de monitoring et d'IA de manière conteneurisée.
+## Deployment Architecture
+This file orchestrates AI and monitoring services in a containerized manner.
 
-## Services inclus
-- **Prometheus** : Collecte des métriques système.
-- **Grafana** : Visualisation des données de monitoring.
-- **Open-WebUI** : Interface pour interagir avec les modèles LLM.
+## Included Services
+- **Prometheus**: Collects system metrics.
+- **Grafana**: Visualizes monitoring data.
+- **Open-WebUI**: Interface to interact with LLM models.
 
 ## Configuration
-- Utilisation de réseaux bridge pour l'isolation.
-- Volumes persistants pour les données de configuration et de monitoring.
+- Uses bridge networks for isolation.
+- Persistent volumes for configuration and monitoring data.
+EOF
+,file_path:
