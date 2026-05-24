@@ -1,12 +1,14 @@
 # Local AI Sovereign Stack
 
 ## Description
-Infrastructure autonome pour l'IA, sans dépendance au cloud. Déploiement complet via conteneurs Docker orchestrés.
+Complete autonomous AI infrastructure with zero cloud dependencies. Deployment configured via docker-compose.
 
-## Composants
-- Orchestration : Docker-Compose
-- Monitoring : Stack Grafana/Prometheus
-- LLM Runtime : Ollama
+## Components
+- **Orchestration**: Docker-Compose
+- **Monitoring**: Grafana/Prometheus Stack
+- **LLM Runtime**: Ollama
 
-## Configuration
-Voir le dossier /deployment pour la configuration Docker.
+## Documentation
+- [System Design](architecture/SYSTEM_DESIGN.md)
+- [AI Architecture Overview](docs/AI_ARCHITECTURE_OVERVIEW.md)
+- [Optimization Report](docs/LOCAL_AI_CONFIG_OPTIMIZATION.md)

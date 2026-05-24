@@ -1,27 +1,25 @@
-# Architecture du Stack IA Souverain
+# Sovereign AI Stack Architecture
 
-## Vue d'ensemble
-Cette architecture permet l'exécution de modèles de langage (LLM) complexes (type Qwen 27B) localement, sans aucune dépendance au cloud, garantissant une souveraineté totale sur les données.
+## Overview
+This architecture enables local execution of Large Language Models (LLMs) (e.g., Qwen 27B) without cloud dependencies, ensuring complete data sovereignty.
 
-## 1. Moteur d'Inférence (Backend) : Ollama
-Ollama agit comme le serveur d'inférence central.
-- **Rôle :** Expose une API REST locale sur le port `11434`.
-- **Accélération :** Tire parti de la pile CUDA pour déléguer les calculs tensoriels aux GPU NVIDIA.
-- **Modèles :** Gestion dynamique (chargement/déchargement) des poids des modèles (Qwen, Llama3) en VRAM.
+## 1. Inference Engine (Backend): Ollama
+Ollama serves as the central inference server.
+- **Role:** Exposes a local REST API on port `11434`.
+- **Acceleration:** Leverages CUDA to delegate tensor calculations to NVIDIA GPUs.
+- **Models:** Dynamic management (loading/unloading) of model weights (Qwen, Llama3) in VRAM.
 
-## 2. Orchestration & Isolation : Docker
-L'interface utilisateur et les services annexes sont conteneurisés pour une gestion propre et répétable.
-- **Isolation :** Chaque service (UI, Monitoring) tourne dans un conteneur dédié, sans impacter l'hôte.
-- **Persistance :** Utilisation de volumes Docker pour garantir que les données (logs, bases de données) survivent aux redémarrages.
-- **Communication :** Les conteneurs communiquent via un réseau Docker interne ou directement avec l'API Ollama de l'hôte via l'IP réseau local.
+## 2. Orchestration & Isolation: Docker
+UI and ancillary services are containerized for clean, repeatable management.
+- **Isolation:** Each service (UI, Monitoring) runs in a dedicated container, without impacting the host.
+- **Persistence:** Uses Docker volumes to ensure data (logs, databases) survives restarts.
+- **Communication:** Containers communicate via an internal Docker network or directly with the host Ollama API via local network IP.
 
-## 3. Pont d'Intégration (API Bridge)
-La liaison entre les outils de sécurité (scripts Python/Kali) et le stack IA est assurée par un pont logiciel :
-- **Serveur MCP :** Un orchestrateur (`mcp-security-server.js`) fait le lien entre les modèles et les outils de sécurité externes (nmap, nuclei, etc.).
-- **Python Bridge :** Des scripts Python utilisent la bibliothèque `requests` pour interroger l'API Ollama, transformant ainsi les résultats de scan en insights intelligibles pour l'utilisateur.
+## 3. Integration Bridge (API Bridge)
+The link between security tools (Python scripts/Kali) and the AI stack is ensured by a software bridge:
+- **MCP Server:** An orchestrator (`mcp-security-server.js`) bridges models and external security tools (nmap, nuclei, etc.).
+- **Python Bridge:** Python scripts use the `requests` library to query the Ollama API, translating scan results into human-readable insights.
 
-## 4. Sécurité et Souveraineté
-- **Confidentialité :** Zéro appel externe. L'inférence est 100% locale.
-- **Auditabilité :** Les logs d'inférence et d'orchestration sont centralisés dans le cluster de monitoring (Prometheus/Grafana).
-EOF
-,file_path:
+## 4. Security & Sovereignty
+- **Confidentiality:** Zero external calls. Inference is 100% local.
+- **Auditability:** Inference and orchestration logs are centralized in the monitoring cluster (Prometheus/Grafana).
