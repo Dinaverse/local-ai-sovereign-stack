@@ -1,12 +1,12 @@
 # 🤖 Local AI Sovereign Stack
 
-> *A fully self-hosted, cloud-agnostic AI infrastructure stack — combining Ollama, Docker, and Prometheus/Grafana for local LLM inference, autonomous workflows, and real-time observability.*
+> *A fully self-hosted, cloud-agnostic AI infrastructure stack - combining Ollama, Docker, and Prometheus/Grafana for local LLM inference, autonomous workflows, and real-time observability.*
 
 ---
 
 ## 🎯 Overview
 
-This repository defines the complete AI runtime environment of the sovereign lab. Every component runs locally on bare-metal hardware — no API keys, no cloud billing, no data leaving the perimeter. The stack is deployed via Docker Compose and designed for resilience and reproducibility.
+This repository defines the complete AI runtime environment of the sovereign lab. Every component runs locally on bare-metal hardware - no API keys, no cloud billing, no data leaving the perimeter. The stack is deployed via Docker Compose and designed for resilience and reproducibility.
 
 ---
 
@@ -27,7 +27,7 @@ This repository defines the complete AI runtime environment of the sovereign lab
 ## 🏗️ Architecture
 
 ```
-[Bare-Metal Host — Arch Linux]
+[Bare-Metal Host - Arch Linux]
          │
     [Docker Engine]
          │
@@ -62,9 +62,9 @@ docker compose ps
 
 ## 📊 Monitoring
 
-- **Grafana** → `http://localhost:3000` — GPU metrics, inference throughput, system health
-- **Prometheus** → `http://localhost:9090` — raw metrics & alerting rules
-- **Ollama API** → `http://localhost:11434` — LLM inference endpoint
+- **Grafana** → `http://localhost:3000` - GPU metrics, inference throughput, system health
+- **Prometheus** → `http://localhost:9090` - raw metrics & alerting rules
+- **Ollama API** → `http://localhost:11434` - LLM inference endpoint
 
 ---
 
