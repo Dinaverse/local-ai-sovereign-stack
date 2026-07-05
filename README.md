@@ -12,6 +12,8 @@ This repository defines the complete AI runtime environment of the sovereign lab
 
 **Host:** Arch-GPU node or Dell-Gateway (flexible deployment)
 
+**Status:** ✅ Operational — All services running and monitored
+
 ---
 
 ## 🧩 Stack Components
@@ -51,198 +53,390 @@ This repository defines the complete AI runtime environment of the sovereign lab
 
 ---
 
-## ⚡ Deployment
+## 📦 Services & Deployment
 
-### Prerequisites
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- 24 GB VRAM (for Qwen 3.5:27B) or adjust model size
-- Linux host (Arch, Debian, Ubuntu)
+### Ollama (LLM Runtime)
 
-### Quick Start
+**Purpose:** Local large language model inference with multi-GPU acceleration
 
-```bash
-# Clone and launch the full stack
-git clone https://github.com/Dinaverse/local-ai-sovereign-stack
-cd local-ai-sovereign-stack
-
-# Start all services
-docker compose up -d
-
-# Verify services
-docker compose ps
+**Configuration:**
+```yaml
+Container: ollama/ollama:latest
+GPUs: all 4× P106-100 cards
+Model: Qwen 3.5:27B
+VRAM Pool: 24 GB total
+Port: 11434
 ```
 
-### Container Health Checks
-
+**Health Check:**
 ```bash
-# View logs
-docker compose logs -f ollama
-docker compose logs -f grafana
-docker compose logs -f prometheus
+curl http://localhost:11434/api/tags
+```
 
-# Container stats
-docker stats
+### Prometheus (Metrics Collection)
+
+**Purpose:** Collect system and application metrics across all nodes
+
+**Configuration:**
+```yaml
+Container: prom/prometheus:latest
+Port: 9090
+Scrape Interval: 15s
+Retention: 30d
+Targets: node-exporter, ollama, n8n
+```
+
+### Grafana (Monitoring Dashboards)
+
+**Purpose:** Real-time visualization of system health, GPU metrics, and inference performance
+
+**Configuration:**
+```yaml
+Container: grafana/grafana:latest
+Port: 3000
+Data Source: Prometheus :9090
+Dashboards: GPU cluster, inference latency, system health
+```
+
+**Default Credentials:**
+- Admin: `admin` / `admin` (change on first login)
+
+### n8n (Workflow Automation)
+
+**Purpose:** Orchestrate complex workflows, trigger security scans, manage infrastructure
+
+**Configuration:**
+```yaml
+Container: n8n:latest
+Port: 5678
+Workflows: autonomous-executor, security-ops, infrastructure-manager
+Execution: background jobs + webhooks
+```
+
+### Portainer (Docker Management)
+
+**Purpose:** Visual management of containers, images, volumes
+
+**Configuration:**
+```yaml
+Container: portainer/portainer-ce:latest
+Port: 9443
+Features: container management, logs, resource monitoring
 ```
 
 ---
 
-## 📊 Monitoring & Access
+## 🚀 Deployment
 
-| Service | URL | Purpose | Access |
-|---------|-----|---------|--------|
-| **Grafana** | http://localhost:3000 | GPU metrics, inference throughput, system health | Default creds: admin/admin |
-| **Prometheus** | http://localhost:9090 | Raw metrics & alerting rules | Query interface |
-| **Ollama API** | http://localhost:11434 | LLM inference endpoint | REST API |
-| **Portainer** | https://localhost:9443 | Docker container management | Web UI |
+### Prerequisites
 
-### Example Ollama Queries
+```bash
+# System requirements
+- Docker Engine 20.10+
+- Docker Compose 2.0+
+- 62+ GB RAM (for multi-GPU + monitoring)
+- 24 GB GPU VRAM available
+```
+
+### Quick Start
+
+```bash
+# Clone repository
+git clone https://github.com/Dinaverse/local-ai-sovereign-stack.git
+cd local-ai-sovereign-stack
+
+# Configure environment
+cp .env.example .env
+nano .env  # Edit GPU settings, model, etc.
+
+# Deploy stack
+docker-compose up -d
+
+# Verify services
+docker-compose ps
+```
+
+### Environment Configuration (`.env`)
+
+```bash
+# Ollama Configuration
+OLLAMA_MODEL=qwen2.5:27b
+OLLAMA_GPU_COUNT=4
+OLLAMA_NUM_GPU=4
+CUDA_VISIBLE_DEVICES=0,1,2,3
+
+# Prometheus Configuration
+PROMETHEUS_RETENTION=30d
+PROMETHEUS_SCRAPE_INTERVAL=15s
+
+# Grafana Configuration
+GF_SECURITY_ADMIN_PASSWORD=secure_password
+GF_INSTALL_PLUGINS=grafana-piechart-panel
+
+# n8n Configuration
+N8N_SECURE_COOKIE=true
+N8N_ENCRYPTION_KEY=your-secure-key
+
+# Network Configuration
+DOCKER_NETWORK=sovereign-net
+HOST_IP=192.168.1.100
+```
+
+### Compose File Structure
+
+```yaml
+version: '3.8'
+
+networks:
+  sovereign-net:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  ollama_models:
+  n8n_data:
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    gpus: all
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_NUM_GPU=${OLLAMA_NUM_GPU}
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - sovereign-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - sovereign-net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - sovereign-net
+
+  n8n:
+    image: n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - sovereign-net
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9443:9443"
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - sovereign-net
+```
+
+---
+
+## 📊 Monitoring & Dashboards
+
+### Access Points
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Ollama** | `http://localhost:11434` | LLM API endpoint |
+| **Prometheus** | `http://localhost:9090` | Metrics database |
+| **Grafana** | `http://localhost:3000` | Monitoring dashboards |
+| **n8n** | `http://localhost:5678` | Workflow builder |
+| **Portainer** | `https://localhost:9443` | Docker management |
+
+### Grafana Dashboards
+
+Pre-configured dashboards:
+
+1. **GPU Cluster Overview** — GPU utilization, VRAM usage, temperature
+2. **Inference Performance** — Model latency, throughput, requests/sec
+3. **System Health** — CPU, memory, disk, network across all nodes
+4. **Container Status** — Running services, resource consumption
+5. **n8n Workflows** — Execution status, success rate, errors
+
+---
+
+## 🔧 Common Operations
+
+### Check Ollama Status
 
 ```bash
 # List loaded models
 curl http://localhost:11434/api/tags
 
-# Run inference
+# Generate response (test inference)
 curl -X POST http://localhost:11434/api/generate \
-  -H "Content-Type: application/json" \
-  -d '{"model": "qwen:27b", "prompt": "Hello"}'
+  -d '{"model": "qwen2.5:27b", "prompt": "What is AI?"}'
+```
 
-# Check model status
-curl http://localhost:11434/api/show -d '{"model": "qwen:27b"}'
+### View Metrics in Prometheus
+
+```bash
+# Access Prometheus UI
+# Navigate to: http://localhost:9090
+
+# Query examples:
+# GPU utilization: nvidia_smi_utilization_gpu
+# Model latency: ollama_request_duration_seconds
+# Memory usage: container_memory_usage_bytes
+```
+
+### Manage Workflows in n8n
+
+```bash
+# Access n8n UI
+# Navigate to: http://localhost:5678
+
+# Create workflows for:
+# - Daily security scans
+# - Infrastructure health checks
+# - Model performance logging
+# - Incident response automation
+```
+
+### Scale GPU Resources
+
+```bash
+# Modify .env
+OLLAMA_NUM_GPU=4
+CUDA_VISIBLE_DEVICES=0,1,2,3
+
+# Restart Ollama service
+docker-compose restart ollama
 ```
 
 ---
 
-## 🔄 Integration with Lab
+## 🛡️ Security
 
-| Component | Integration | Details |
-|-----------|-------------|---------|
-| **Arch-GPU Node** | Preferred host | Optimized CUDA setup, 24 GB VRAM available |
-| **n8n Workflows** | Automated orchestration | Triggered by Prometheus alerts or schedules |
-| **Sovereign AI Skills** | Custom prompts | Extends Ollama with domain-specific reasoning |
-| **Morpheus Pipeline** | Threat detection | Consumes Prometheus metrics for anomaly detection |
-| **Security Agents** | Log ingestion | Collect metrics from Prometheus for analysis |
-
----
-
-## 📁 Directory Structure
-
-```
-local-ai-sovereign-stack/
-├── README.md                          (this file)
-├── docker-compose.yml                 Service definitions
-├── .env                               Environment configuration
-├── ollama/
-│   ├── Dockerfile                     Ollama runtime image
-│   └── config/
-│       └── modelfile                  Model configuration
-├── prometheus/
-│   ├── prometheus.yml                 Scrape targets & alerting rules
-│   └── alerts.yml                     Alert definitions
-├── grafana/
-│   ├── provisioning/
-│   │   ├── datasources/               Prometheus data source
-│   │   └── dashboards/                Pre-built dashboard definitions
-│   └── dashboards/
-│       ├── ai-metrics.json            LLM inference metrics
-│       ├── gpu-performance.json       GPU utilization dashboard
-│       └── system-health.json         System-wide health dashboard
-└── n8n/
-    └── workflows/
-        ├── inference-triggers.json    Automated inference workflows
-        └── alert-response.json        Alert-driven workflows
-```
+- **No Cloud Dependencies** — All data stays local
+- **Network Isolation** — Internal Docker network only
+- **Encrypted Communication** — TLS/SSL for external access
+- **Access Control** — Authentication required for all services
+- **Audit Logging** — All operations logged to Prometheus/Grafana
 
 ---
 
 ## 🔗 Related Repositories
 
-| Repository | Purpose | Connection |
-|------------|---------|-----------|
-| **[sovereign-ai-infrastructure](https://github.com/Dinaverse/sovereign-ai-infrastructure)** | Architecture documentation | Central docs hub |
-| **[arch-linux-multi-gpu-llm](https://github.com/Dinaverse/arch-linux-multi-gpu-llm)** | GPU cluster optimization | Hosts this stack |
-| **[sovereign-ai-skills](https://github.com/Dinaverse/sovereign-ai-skills)** | AI skill extensions | Enhances Ollama prompts |
-| **[sovereign-ai-security](https://github.com/Dinaverse/sovereign-ai-security)** | Morpheus integration | Consumes Ollama output |
-| **[n8n-automation-hub](https://github.com/Dinaverse/n8n-automation-hub)** | Workflow definitions | Orchestrates services |
-| **[cybersecurity-lab-automation](https://github.com/Dinaverse/cybersecurity-lab-automation)** | Security automation | Uses Prometheus metrics |
+| Repository | Purpose |
+|------------|---------|
+| [sovereign-ai-infrastructure](https://github.com/Dinaverse/sovereign-ai-infrastructure) | Architecture documentation |
+| [arch-linux-multi-gpu-llm](https://github.com/Dinaverse/arch-linux-multi-gpu-llm) | GPU cluster setup guide |
+| [n8n-automation-hub](https://github.com/Dinaverse/n8n-automation-hub) | Workflow definitions |
+| [sovereign-lab-orchestration](https://github.com/Dinaverse/sovereign-lab-orchestration) | IaC & orchestration |
 
 ---
 
-## 🚀 Advanced Configuration
+## 📈 Performance Optimization
 
-### Custom Model Deployment
+### GPU Optimization
 
 ```bash
-# Pull a different model
-docker compose exec ollama ollama pull mistral:7b
+# Enable persistence mode (reduces GPU init overhead)
+nvidia-smi -pm 1
 
-# Set as default
-docker compose exec ollama ollama set-default mistral:7b
+# Check current GPU allocation
+nvidia-smi
+
+# Monitor inference metrics
+watch -n 1 nvidia-smi
 ```
 
-### Prometheus Custom Metrics
+### Memory Tuning
 
-Add custom scrape targets in `prometheus/prometheus.yml`:
-
-```yaml
-scrape_configs:
-  - job_name: 'ollama'
-    static_configs:
-      - targets: ['localhost:11434']
-  - job_name: 'custom-agent'
-    static_configs:
-      - targets: ['localhost:9100']
-```
-
-### Scale to Multiple Hosts
-
-Modify `docker-compose.yml` to deploy on multiple nodes:
-
-```yaml
-services:
-  ollama:
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+```bash
+# Increase Docker memory limits if needed
+# In docker-compose.yml:
+mem_limit: 32g
+memswap_limit: 32g
 ```
 
 ---
 
-## 📖 Documentation
+## 🚨 Troubleshooting
 
-- **[System Design](docs/SYSTEM_DESIGN.md)** — Architecture deep-dive
-- **[GPU Optimization](../arch-linux-multi-gpu-llm/README.md)** — CUDA tuning & layer offloading
-- **[Orchestration Guide](../sovereign-ai-infrastructure/orchestration/README.md)** — Lab-wide operations
+### Ollama Not Detecting GPUs
+
+```bash
+# Check CUDA availability
+docker exec ollama nvidia-smi
+
+# Verify GPU runtime
+docker run --rm --gpus all nvidia/cuda:11.8.0-runtime-ubuntu22.04 nvidia-smi
+
+# Restart with explicit GPU configuration
+docker-compose down
+CUDA_VISIBLE_DEVICES=0,1,2,3 docker-compose up ollama -d
+```
+
+### High Memory Usage
+
+```bash
+# Check container resource usage
+docker stats
+
+# Limit Ollama memory
+# Update docker-compose.yml with memory limits
+# Restart: docker-compose restart ollama
+```
+
+### Prometheus Disk Space
+
+```bash
+# Clean up old metrics
+docker exec prometheus promtool query instant 'up'
+
+# Adjust retention policy in .env
+PROMETHEUS_RETENTION=14d  # Reduce if needed
+```
 
 ---
 
-## ⚙️ Troubleshooting
+## ✅ Health Checks
 
-### GPU Not Detected
 ```bash
-# Check NVIDIA drivers
-docker compose exec ollama nvidia-smi
+# All services status
+docker-compose ps
 
-# Verify CUDA availability
-docker compose exec ollama ollama run qwen:27b "nvidia-smi"
-```
+# Ollama readiness
+curl -s http://localhost:11434/api/tags | jq '.models'
 
-### Out of Memory
-```bash
-# Reduce model size or enable layer offloading
-# Edit docker-compose.yml environment variables
-```
+# Prometheus scrape targets
+curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets'
 
-### Prometheus Not Scraping
-```bash
-# Check targets
-curl http://localhost:9090/api/v1/targets
+# Grafana datasources
+curl -s http://localhost:3000/api/datasources
+
+# n8n execution status
+curl -s http://localhost:5678/api/v1/executions
 ```
 
 ---
 
-*Local by choice. Sovereign by design. Zero cloud, full control.*
+*Sovereign AI. Local. Offline. Yours.*
